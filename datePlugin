@@ -1,0 +1,132 @@
+(function(){
+		$.fn.extend({
+					/*下标月份数组、滑动条宽度、div1val 1-3,表示每个滑动条的截数，mousedown鼠标点击完后获取的相应标志位的值，1-6*/
+			"initSlider":function(option){
+				var defaults = {
+					showMonths:['01月','02月','03月','04月','05月','06月'],
+					height:5,
+					width:72,
+					div1val:0,
+					div2val:2,
+					div3val:3,
+					//用来判断到最左端的位置的值 
+					a:1,
+					backgroundcolor1:'grey',
+					backgroundcolor2:'green',
+					backgroundcolor3:'grey',
+					sliderPosition:0,
+					mousedown:function(value){
+						
+					}
+				};
+				var settings = $.extend(defaults,option);
+				var s_container='<div class="container">'+
+	   			'<div class="_1"></div>'+
+				'<div class="_2">'+
+				'<div class="slider"></div>'+
+				'</div>'+
+				'<div class="_3"></div>'+
+				'</div>'
+				$(this).html(s_container);
+				$(".container").css({
+					"width":"360px",
+					"height":"30px",
+					"margin":"auto",
+					"padding-top":"10px",
+					"position":"relative",
+				});
+				//alert(settings.a);
+				settings.sliderPosition = settings.a*settings.width-7;
+				$("._1").css({"width": settings.width*settings.div1val + "px", 
+				"height": settings.height + "px",
+				"background-color":settings.backgroundcolor1,
+				"float":"left"});
+				$("._2").css({"width": settings.width*settings.div2val+ "px", 
+				"height": settings.height + "px",
+				"background-color":settings.backgroundcolor2,
+				"float":"left","position":"relative","overflow":"visible"});
+				$("._3").css({"width": settings.width*settings.div3val + "px", 
+				"height": settings.height + "px",
+				"background-color":settings.backgroundcolor3,
+				"float":"left"});
+				$(".slider").css({
+				"position":"absolute",
+				"width":"15px",
+				"height":"15px",
+				"border-radius":"15px",
+				"top":"-4px",
+				"left":""+settings.sliderPosition+"px",
+				"background-color":settings.backgroundcolor3,
+				"cursor":"pointer"
+			});
+				settings.showMonths.forEach(function(value,index){
+				var tmp = $("<div class='month'>"+value+"</div>");
+				tmp.css({"width":"35px","left":index*settings.width-9,"float":"left","top":"25px","position":"absolute"});
+				$(".container").append(tmp);
+				
+	
+				});
+			var tmp = {
+						x:$(".slider").offset().left-settings.div1val*settings.width, //滑块初始相对与整个屏幕左边的位置
+						originLeft:-7, 	//滑块在_2这个div中左边的位置，这里定为-7是为了把连个div的边界遮住。
+						isClicked:false, //是否点击滑块，因为mousemove和mouseup事件都放在.container中，所有要保证先点了滑块才触发这两个时间
+						initValue:settings.div1val+1   //初始的值 ，这里假设初始值为2
+				};
+		
+			$(".slider").on("mousedown",function(event){
+				tmp.x=event.clientX;
+				tmp.isClicked = true;
+				console.log("mousedown=");
+				console.log(tmp.x);
+			});
+			
+			$("._2").on("mousemove",function(event){
+				if(!tmp.isClicked) return;   //这有先点击的slider才继续
+				tmp.kk=event.clientX-tmp.x+tmp.originLeft;
+				console.log("mousemove="+111);
+				console.log("mousemove=");
+				if(tmp.kk<0)         //无论是小于0 还是大于的最大值都归位
+					tmp.kk=settings.width*settings.div2val-7;
+				else if(tmp.kk>settings.width*settings.div2val)
+					tmp.kk=settings.width*settings.div2val-7;
+				console.log(tmp.kk)	;
+				$(".slider").css("left",tmp.kk);
+			});
+			
+			$("._2").on("mouseup",function(event){
+				if(!tmp.isClicked) return;   //这有先点击的slider才继续
+				tmp.isClicked=false;
+				//caculate(event);
+				var xx = caculate(event);
+				settings.mousedown(xx);
+			});
+			$("._2").on("click",function(event){
+				var xx = caculate(event);
+				settings.mousedown(xx);
+			});
+			
+			 function caculate(event){
+				var a = (event.clientX-tmp.x)/settings.width;
+				console.log("==="+a);
+				var diff = 0;
+				if(Math.abs(parseInt(a)-a)<0.5){   //这里的逻辑是假设滑块滑到了2和3中间，那么靠近2就选2，靠近3就选3
+					diff=+parseInt(a);
+				}else{
+					diff=parseInt(a)+ (a >0?1:-1);
+				}
+				if(settings.div1val==5){
+					$(".slider").css("left",tmp.originLeft);
+				}else{
+					tmp.initValue=tmp.initValue+diff;
+					tmp.originLeft=(tmp.initValue+(settings.div2val-1))*settings.width-7;
+					$(".slider").css("left",tmp.originLeft);
+					tmp.x = tmp.x+diff*settings.width;
+				}
+				
+				return tmp.initValue;
+			}
+			
+			}
+		});
+		
+})(jQuery);
